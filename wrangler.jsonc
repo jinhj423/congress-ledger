@@ -1,0 +1,9 @@
+{
+  "name": "congress-ledger",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./public" },
+  "vars": {
+    "DATA_BASE": "https://raw.githubusercontent.com/jinhj423/congress-ledger/data/site"
+  }
+}
