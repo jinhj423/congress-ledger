@@ -17,7 +17,11 @@ BASE = "https://disclosures-clerk.house.gov/public_disc"
 OWNER = {"SP": "spouse", "JT": "joint", "DC": "child"}
 KIND = {"ST": "stock", "OP": "option", "EF": "etf"}
 
-TX_RE = re.compile(r"^(?:(SP|JT|DC)\s+)?(.*?)\s+(S \(partial\)|P|S|E)\s+(\d{2}/\d{2}/\d{4})\s+(\d{2}/\d{2}/\d{4})\s*(.*)$")
+HEADER = re.compile(r"^(ID Owner Asset|Type Date|\$200\?|Filing ID #|Gains >)")
+TX_RE = re.compile(r"^(?:\d{6,}\s+)?(?:(SP|JT|DC)\s+)?(.*?)\s+(S \(partial\)|P|S|E)\s+(\d{2}/\d{2}/\d{4})\s+(\d{2}/\d{2}/\d{4})\s*(.*)$")
+
+
+PV = 2  # 파서 버전: 읽는 방법을 고치면 올린다(저장된 보고서를 다시 읽음)
 
 
 def pdf_url(year, doc):
@@ -50,9 +54,16 @@ def parse_text(text):
         tk = re.findall(r"\(([A-Z][A-Z0-9.\-]{0,9})\)", asset)
         code = re.findall(r"\[([A-Z]{2})\]", asset)
         cur["ticker"] = tk[-1] if tk else None
-        cur["kind"] = KIND.get(code[-1] if code else "", "other")
+        # 자산 종류 기호가 없으면(쪽이 바뀌며 빠진 경우) 종목 기호가 있을 때 주식으로 본다
+        cur["kind"] = KIND.get(code[-1], "other") if code else ("stock" if tk else "other")
         cur["asset"] = re.sub(r"\s*\[[A-Z]{2}\]", "", asset).strip()
-        cur["lo"], cur["hi"] = parse_amount(cur.pop("_amt"))
+        amt = cur.pop("_amt")
+        if parse_amount(amt)[0] is None:  # 금액이 다음 줄로 밀린 경우
+            m = re.search(r"((?:over\s+)?\$[\d,]+(?:\s*-\s*\$[\d,]+)?)\s*$", cur["asset"], re.I)
+            if m:
+                amt += " " + m.group(1)
+                cur["asset"] = cur["asset"][: m.start()].strip()
+        cur["lo"], cur["hi"] = parse_amount(amt)
         txs.append(cur)
 
     for ln in lines:
@@ -62,8 +73,8 @@ def parse_text(text):
             cur = {"tx": parse_date(m.group(4)), "owner": OWNER.get(m.group(1) or "", "self"),
                    "side": side_of(m.group(3)), "_asset": m.group(2), "_amt": m.group(6)}
             continue
-        if cur is None:
-            continue
+        if cur is None or HEADER.match(ln):
+            continue  # 쪽마다 반복되는 표 머리는 건너뛴다
         if ":" in ln or ln.startswith("*") or not ln:
             close()
             cur = None
@@ -101,12 +112,12 @@ def collect(s, store, deadline, log, keep_from):
         log(f"하원 {y}: 기간 안 거래 보고서 {len(rows)}건")
         for f in rows:
             key = "h" + f["doc"]
-            if key in store:
+            if store.get(key, {}).get("pv") == PV:
                 continue
             if time.time() > deadline:
                 return new, True
             item = {"ch": "house", "name": f["name"], "state": f["state"], "dist": f["dist"], "filed": f["filed"],
-                    "url": pdf_url(f["year"], f["doc"]), "paper": f["paper"], "txs": []}
+                    "url": pdf_url(f["year"], f["doc"]), "paper": f["paper"], "txs": [], "pv": PV}
             if not f["paper"]:
                 p = get(s, item["url"])
                 if p is None:

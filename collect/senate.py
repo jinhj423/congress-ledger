@@ -16,6 +16,9 @@ OWNER = {"SELF": "self", "SPOUSE": "spouse", "JOINT": "joint", "CHILD": "child",
 KIND = {"STOCK": "stock", "STOCK OPTION": "option", "OTHER SECURITIES": "other"}
 
 
+PV = 1  # 파서 버전: 읽는 방법을 고치면 올린다(저장된 보고서를 다시 읽음)
+
+
 def clean(s):
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", s or ""))).strip()
 
@@ -82,12 +85,12 @@ def collect(s, store, deadline, log, keep_from):
     new = 0
     for f in rows:
         key = "s" + f["id"]
-        if key in store:
+        if store.get(key, {}).get("pv") == PV:
             continue
         if time.time() > deadline:
             return new, True
         item = {"ch": "senate", "name": f["name"], "state": "", "filed": f["filed"], "url": f["url"],
-                "paper": f["paper"], "txs": []}
+                "paper": f["paper"], "txs": [], "pv": PV}
         if not f["paper"]:
             p = get(s, f["url"], headers={"Referer": BASE + "/search/"})
             if p is None:

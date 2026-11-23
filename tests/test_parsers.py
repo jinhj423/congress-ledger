@@ -84,6 +84,28 @@ class House(unittest.TestCase):
         self.assertEqual((txs[1]["lo"], txs[1]["hi"]), (50000001, None))
         self.assertEqual((txs[2]["lo"], txs[2]["hi"]), (15001, 50000))
 
+    def test_text_id_column_page_break_and_late_amount(self):
+        text = "\n".join([
+            "2000159506 SP Atlas Energy Solutions Inc. Common Stock P 05/01/2026 05/02/2026 $1,001 - $15,000",
+            "(AESI) [ST]",
+            "Vanguard Mega Cap Growth ETF P 05/03/2026 05/04/2026 $15,001 -",
+            "Filing ID #20034954",
+            "ID Owner Asset Transaction Date Notification Amount Cap.",
+            "Type Date Gains >",
+            "$200?",
+            "(MGK) $50,000",
+            "SP Audax Senior Loan Fund ST LP P 07/29/2026 07/30/2026 Spouse/DC Over",
+            "$1,000,000",
+        ])
+        txs = house.parse_text(text)
+        self.assertEqual([(t["ticker"], t["owner"], t["kind"]) for t in txs],
+                         [("AESI", "spouse", "stock"), ("MGK", "self", "stock"), (None, "spouse", "other")])
+        self.assertEqual(txs[0]["asset"], "Atlas Energy Solutions Inc. Common Stock (AESI)")
+        self.assertEqual(txs[1]["asset"], "Vanguard Mega Cap Growth ETF (MGK)")
+        self.assertEqual((txs[1]["lo"], txs[1]["hi"]), (15001, 50000))
+        self.assertEqual((txs[2]["lo"], txs[2]["hi"]), (1000001, None))
+        self.assertEqual(txs[2]["asset"], "Audax Senior Loan Fund ST LP")
+
 
 class Senate(unittest.TestCase):
     def test_search(self):
