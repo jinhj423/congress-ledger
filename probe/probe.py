@@ -37,6 +37,7 @@ r = S.post(B + "/search/report/data/", data={"start": "0", "length": "100", "rep
     "submitted_start_date": start.strftime("%m/%d/%Y 00:00:00"), "submitted_end_date": "", "candidate_state": "", "senator_state": "",
     "office_id": "", "first_name": "", "last_name": "", "csrfmiddlewaretoken": csrf}, headers={"Referer": B + "/search/", "X-CSRFToken": csrf}, timeout=60)
 print("data", r.status_code, r.text[:300])
+open("out/senate_search.json","w").write(r.text)
 j = r.json(); print("total", j.get("recordsTotal")); rows = j["data"]
 for row in rows[:3]: print(row)
 links = [re.search(r'href="([^"]+)"', row[3]).group(1) for row in rows]
