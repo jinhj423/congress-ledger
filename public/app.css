@@ -53,6 +53,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;color:var(--ink3);font-weight:600;font-size:11px;padding:0 6px 8px;white-space:nowrap}
 td{padding:8px 6px;border-top:1px solid var(--line);vertical-align:middle}
 td small{display:block;color:var(--ink3);font-size:11px;margin-top:1px}
+td b{white-space:nowrap}
 td.tk{font-weight:800}
 td.sd{font-weight:700;font-size:12px;white-space:nowrap}
 .n{font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -86,4 +87,5 @@ td.sd{font-weight:700;font-size:12px;white-space:nowrap}
   .find{order:5;flex:1 1 100%}.find input{width:100%}
   .c-am,.c-tx,.c-ln{display:none}
   .st div{font-size:24px}
+  .logo small{display:block;margin:2px 0 0}
 }

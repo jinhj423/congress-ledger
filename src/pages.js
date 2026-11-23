@@ -85,7 +85,7 @@ function table(rows, { showTicker = true } = {}) {
     .map(
       (r) => `<tr><td><b>${esc(r.name)}</b><small>${CH[r.ch]}${r.st ? ` · ${esc(r.st)}` : ''} · ${OWN[r.own] || '본인'}</small></td>
 ${showTicker ? `<td class="tk"><a href="/t/${esc(r.t)}/">${esc(r.t)}</a>${r.k === 'option' ? '<small>옵션</small>' : ''}</td>` : ''}
-<td class="${r.sd === 'buy' ? 'up' : 'dn'} sd">${SD[r.sd]}</td><td class="n c-am">${range(r.lo, r.hi)}</td><td class="n c-tx">${md(r.tx)}</td><td class="n">${md(r.f)}</td>
+<td class="${r.sd === 'buy' ? 'up' : 'dn'} sd">${SD[r.sd]}</td><td class="n c-am">${range(r.lo, r.hi)}</td><td class="n c-tx">${r.tx && r.f && r.tx.slice(0, 4) !== r.f.slice(0, 4) ? `${r.tx.slice(2, 4)}.` : ''}${md(r.tx)}</td><td class="n">${md(r.f)}</td>
 <td class="n dl">${r.d == null ? '—' : `${r.d}일`}</td><td class="c-ln"><a href="${esc(r.u)}" rel="noopener nofollow" target="_blank">원문 ↗</a></td></tr>`,
     )
     .join('');
@@ -103,7 +103,7 @@ export function home(env, sum, p, c) {
   const s = pick(sum, p, c);
   if (!s) return noData(env);
   const label = p === '2w' ? '최근 2주' : '최근 1달';
-  const max = Math.max(1, ...s.tickers.slice(0, 12).map((t) => t.b + t.s));
+  const max = Math.max(1, ...s.tickers.slice(0, 13).map((t) => t.b + t.s));
   const hmax = Math.max(1, ...s.hist);
   const hl = ['~7일', '~14', '~21', '~30', '~45', '45+'];
   const body = `${top(env, sum.built, p, c, '/')}
@@ -115,7 +115,7 @@ export function home(env, sum, p, c) {
 <div class="st"><p>평균 신고 지연</p><div>${s.delay ?? '—'}<small>일</small></div></div>
 </div>
 <div class="cols">
-<section class="card"><h2>많이 신고된 종목<small>매수 / 매도</small></h2><ul class="tks">${bars(s.tickers.slice(0, 12), max)}</ul>
+<section class="card"><h2>많이 신고된 종목<small>매수 / 매도</small></h2><ul class="tks">${bars(s.tickers.slice(0, 13), max)}</ul>
 <a class="more" href="/tickers/${q(p, c)}">종목 ${s.tickers.length}개 모두 보기 →</a></section>
 <section class="card"><h2>최근 신고<small>신고일 순</small></h2>${table(s.recent.slice(0, 12))}
 <a class="more" href="/recent/${q(p, c)}">최근 신고 ${s.recent.length}건 모두 보기 →</a></section>
