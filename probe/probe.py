@@ -1,4 +1,5 @@
 """수집 가능성 점검: 하원 색인 zip·PTR PDF, 상원 eFD 동의·검색·PTR HTML."""
+# 재실행: 저장소 공개 전환 뒤
 import io, re, sys, zipfile, datetime as dt, requests, os
 UA = os.environ.get("UA", "congress-ledger probe (non-commercial)")
 S = requests.Session(); S.headers["User-Agent"] = UA
