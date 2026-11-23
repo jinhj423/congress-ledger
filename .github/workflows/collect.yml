@@ -1,0 +1,59 @@
+name: collect
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["collect/**", ".github/workflows/collect.yml"]
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get previous data
+        run: |
+          git clone --quiet --depth 1 --branch data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data || mkdir -p data
+          rm -rf data/.git
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Test parsers
+        run: python -m unittest discover -s tests -q
+
+      - name: Collect
+        env:
+          DATA_DIR: data
+          MAX_SECONDS: "600"
+          USER_AGENT: ${{ secrets.USER_AGENT }}
+        run: python collect/run.py
+
+      - name: Publish data branch
+        run: |
+          cd data
+          git init --quiet -b data
+          git add -A
+          git -c user.name="congress-bot" -c user.email="actions@users.noreply.github.com" commit --quiet -m "data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push --quiet --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
+
+      - name: Run again while backfilling
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -f data/.more ]; then gh workflow run collect.yml --ref "${{ github.ref_name }}" --repo "${{ github.repository }}"; fi
