@@ -47,6 +47,25 @@ def row(e):
             "tx": e["tx"], "f": e["filed"], "d": delay(e), "u": e["url"]}
 
 
+def filings(w, top=12):
+    """거래를 신고서(신고자·신고일·원문) 단위로 묶는다. w는 최신순이어야 한다."""
+    out = {}
+    for e in w:
+        f = out.setdefault((e["name"], e["filed"], e["url"]), {
+            "name": e["name"], "ch": e["ch"], "st": e.get("state", ""), "f": e["filed"], "u": e["url"],
+            "own": [], "tk": [], "n": 0, "b": 0, "s": 0, "d": None})
+        f["n"] += 1
+        f["b" if e["side"] == "buy" else "s"] += 1
+        if e["owner"] not in f["own"]:
+            f["own"].append(e["owner"])
+        if e["ticker"] not in f["tk"]:
+            f["tk"].append(e["ticker"])
+        d = delay(e)
+        if d is not None and (f["d"] is None or d > f["d"]):
+            f["d"] = d
+    return list(out.values())[:top]
+
+
 def summary(evs, today, days, papers=0, top=50, recent=60):
     since = (dt.date.fromisoformat(today) - dt.timedelta(days=days)).isoformat()
     w = [e for e in evs if counted(e) and e["filed"] and e["filed"] > since]
@@ -72,7 +91,7 @@ def summary(evs, today, days, papers=0, top=50, recent=60):
             "senate": sum(e["ch"] == "senate" for e in w), "house": sum(e["ch"] == "house" for e in w),
             "family": sum(e["owner"] != "self" for e in w), "who": len({e["name"] for e in w}),
             "paper": papers, "delay": round(sum(ds) / len(ds)) if ds else None, "hist": hist,
-            "tickers": tickers[:top], "recent": [row(e) for e in w[:recent]]}
+            "tickers": tickers[:top], "recent": [row(e) for e in w[:recent]], "filings": filings(w)}
 
 
 def papers_in(store, today, days, ch=None):

@@ -149,6 +149,15 @@ class Build(unittest.TestCase):
         self.assertEqual(s["delay"], 17)  # 19, 19, 14일 평균 = 17.3 → 17
         self.assertEqual(sum(s["hist"]), 3)
 
+    def test_filings_grouped(self):
+        evs = [self.ev(id="1", url="u1"), self.ev(id="2", url="u1", side="sell", ticker="MSFT", owner="spouse", tx="2026-09-01"),
+               self.ev(id="3", url="u1", ticker="MSFT"), self.ev(id="4", url="u2", name="B", filed="2026-11-21")]
+        fs = build.summary(evs, "2026-11-23", 30)["filings"]
+        self.assertEqual([f["name"] for f in fs], ["B", "A"])  # 신고일 최신순, 신고서 하나가 한 줄
+        a = fs[1]
+        self.assertEqual((a["n"], a["b"], a["s"], a["tk"], a["own"]), (3, 2, 1, ["NVDA", "MSFT"], ["self", "spouse"]))
+        self.assertEqual((a["d"], a["u"], a["f"]), (80, "u1", "2026-11-20"))  # 가장 늦은 거래 기준
+
     def test_two_weeks(self):
         evs = [self.ev(id="1"), self.ev(id="2", filed="2026-11-05")]
         self.assertEqual(build.summary(evs, "2026-11-23", 14)["n"], 1)
