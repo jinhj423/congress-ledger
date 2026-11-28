@@ -28,11 +28,17 @@ test('빈 기간과 나머지 화면도 그려진다', () => {
   assert.match(home({}, {}, '1m', 'all'), /자료를 준비하고 있습니다/);
   for (const h of [recent({}, sum, '1m', 'all'), tickers({}, sum, '1m', 'all'), about({}), notFound({}),
     ticker({}, { t: 'NVDA', a: 'NVIDIA', built: '2026-11-25T09:50:00Z', m1: { n: 2, buy: 2, sell: 0, who: 2 }, rows: rec })]) {
-    assert.ok(h.startsWith('<!doctype html>') && h.includes('/app.css?v=2') && !h.includes('undefined'));
+    assert.ok(h.startsWith('<!doctype html>') && h.includes('/app.css?v=3') && !h.includes('undefined'));
   }
 });
 
 test('금지 표현이 화면에 없다', () => {
   const all = home({}, sum, '1m', 'all') + about({});
   for (const w of ['목표가', '매수 신호', '수익 보장', '랭킹']) assert.ok(!all.includes(w), w);
+});
+
+test('화면 모드 버튼과 머리 스크립트가 모든 화면에 있다', () => {
+  for (const h of [home({}, sum, '1m', 'all'), about({}), notFound({})]) {
+    assert.ok(h.includes('data-thm') && h.includes("localStorage.getItem('cl-theme')"));
+  }
 });
