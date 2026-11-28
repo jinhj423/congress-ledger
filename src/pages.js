@@ -3,7 +3,12 @@ export const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export const SITE = '의회 거래 기록';
-const V = 2; // app.css 캐시 버전: 화면을 고치면 올린다
+const V = 3; // app.css 캐시 버전: 화면을 고치면 올린다
+
+// 화면 모드: 자동(기기 설정)·라이트·다크, 이 기기 localStorage 'cl-theme'. 머리에서 먼저 정해 깜빡임을 막는다.
+const THEME_HEAD = `(function(){try{var t=localStorage.getItem('cl-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}})()`;
+const THEME_BTN = '<button type="button" class="thm" data-thm aria-label="화면 모드 바꾸기">◐ 자동</button>';
+const THEME_BODY = `(function(){var L={auto:'자동',light:'라이트',dark:'다크'},N={auto:'light',light:'dark',dark:'auto'},d=document.documentElement,g=function(){try{return localStorage.getItem('cl-theme')||'auto'}catch(e){return'auto'}};function paint(t){if(t==='auto')delete d.dataset.theme;else d.dataset.theme=t;document.querySelectorAll('[data-thm]').forEach(function(b){b.textContent='◐ '+L[t];b.title='화면 모드: '+L[t]+' (누르면 바뀜)'})}paint(g());document.addEventListener('click',function(e){var b=e.target.closest('[data-thm]');if(!b)return;var t=N[g()];try{localStorage.setItem('cl-theme',t)}catch(x){}paint(t)})})()`;
 
 const CH = { senate: '상원', house: '하원' };
 const OWN = { self: '본인', spouse: '배우자', joint: '공동', child: '자녀' };
@@ -42,6 +47,7 @@ function layout(env, { title, desc, path, body }) {
 <meta property="og:type" content="website"><meta property="og:site_name" content="${SITE}">
 <meta property="og:title" content="${esc(full)}"><meta property="og:description" content="${esc(desc)}">
 <meta name="theme-color" content="#101114">
+<script>${THEME_HEAD}</script>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap">
@@ -51,8 +57,9 @@ function layout(env, { title, desc, path, body }) {
 ${body}
 <footer class="foot"><div class="w">
 <p>미국 하원·상원 공시(STOCK Act 거래 보고서)를 그대로 옮긴 기록입니다. 금액은 신고서의 구간이며 정확한 거래액이 아닙니다. 특정 종목을 사거나 팔라고 권하지 않습니다. 중요한 내용은 공시 원문으로 확인해 주세요. 광고·유료 서비스가 없는 비영리 사이트입니다.</p>
-<nav><a href="/">홈</a><a href="/recent/">최근 신고</a><a href="/tickers/">종목</a><a href="/about/">안내·출처</a></nav>
+<nav><a href="/">홈</a><a href="/recent/">최근 신고</a><a href="/tickers/">종목</a><a href="/about/">안내·출처</a>${THEME_BTN}</nav>
 </div></footer>
+<script>${THEME_BODY}</script>
 </body>
 </html>`;
 }
@@ -68,6 +75,7 @@ function top(p, c, path) {
 <a class="logo" href="/">의회<b>거래기록</b></a>
 ${mid}<span class="sep"></span>
 <form class="find" action="/go/" method="get" role="search"><label class="sr" for="q">종목 기호</label><input id="q" name="q" placeholder="종목 찾기 (예: NVDA)" autocomplete="off" maxlength="10"></form>
+${THEME_BTN.replace('class="thm"', 'class="pill thm"')}
 </header>`;
 }
 
